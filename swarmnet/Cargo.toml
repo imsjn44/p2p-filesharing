@@ -1,0 +1,16 @@
+[lib]
+name = "custom_thread"
+path = "../custom_thread/src/lib.rs"
+
+[package]
+name = "swarmnet"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+hex = "0.4.3"
+rand = "0.8.5"
+regex = "1.8.0"
+sha1 = "0.10.5"

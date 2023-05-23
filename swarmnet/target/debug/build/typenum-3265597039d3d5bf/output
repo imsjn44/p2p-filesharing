@@ -1,0 +1,3 @@
+cargo:rerun-if-changed=build/main.rs
+cargo:rustc-env=TYPENUM_BUILD_CONSTS=c:\Users\nabin\Desktop\SwarmNet\swarmnet\target\debug\build\typenum-3265597039d3d5bf\out\consts.rs
+cargo:rustc-env=TYPENUM_BUILD_OP=c:\Users\nabin\Desktop\SwarmNet\swarmnet\target\debug\build\typenum-3265597039d3d5bf\out\op.rs

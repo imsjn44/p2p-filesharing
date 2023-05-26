@@ -1,0 +1,71 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.delete-icon:hover {
+  color: #E64848;
+}
+
+.file-explorer:hover {
+  color: #FFDD83;
+}
+
+
+@font-face {
+  font-family: "Bauhaus 93";
+  src: url("//db.onlinewebfonts.com/t/89d11a443c316da80dcb8f5e1f63c86e.eot");
+  src: url("//db.onlinewebfonts.com/t/89d11a443c316da80dcb8f5e1f63c86e.eot?#iefix") format("embedded-opentype"), url("//db.onlinewebfonts.com/t/89d11a443c316da80dcb8f5e1f63c86e.woff2") format("woff2"), url("//db.onlinewebfonts.com/t/89d11a443c316da80dcb8f5e1f63c86e.woff") format("woff"), url("//db.onlinewebfonts.com/t/89d11a443c316da80dcb8f5e1f63c86e.ttf") format("truetype"), url("//db.onlinewebfonts.com/t/89d11a443c316da80dcb8f5e1f63c86e.svg#Bauhaus 93") format("svg");
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.font-badge {
+
+  font-family: "Bauhaus 93";
+}
+
+@font-face {
+  font-family: "Monopoly";
+  src: url("//db.onlinewebfonts.com/t/bcf7256a4b092d678ee4c33ed188622e.eot");
+  src: url("//db.onlinewebfonts.com/t/bcf7256a4b092d678ee4c33ed188622e.eot?#iefix") format("embedded-opentype"), url("//db.onlinewebfonts.com/t/bcf7256a4b092d678ee4c33ed188622e.woff2") format("woff2"), url("//db.onlinewebfonts.com/t/bcf7256a4b092d678ee4c33ed188622e.woff") format("woff"), url("//db.onlinewebfonts.com/t/bcf7256a4b092d678ee4c33ed188622e.ttf") format("truetype"), url("//db.onlinewebfonts.com/t/bcf7256a4b092d678ee4c33ed188622e.svg#Monopoly") format("svg");
+}
+
+.font-header {
+
+  font-family: "Monopoly"
+
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -64,7 +64,7 @@ fn download_status_tracker(window: Arc<Mutex<Window>>, file_hash: String, chunks
             Ok(files) => files,
             Err(_) => {
                 println!("folder doesn't exist");
-                count += 1;
+                count += 100;
                 continue;}
         };
         count = files.count();
@@ -96,7 +96,6 @@ fn download_status_tracker(window: Arc<Mutex<Window>>, file_hash: String, chunks
     }
 }
 fn main() {
-    let ip_addrs = local_ip().unwrap().to_string();
 
     let mut peer = SwarmNet::start();
     // peer.ip_addrs = ip_addrs;

@@ -41,7 +41,8 @@ pub fn handle_piece_request(
     let file_path = Path::new(&file_path);
     if let Ok(exists) = file_path.try_exists(){
         if file_path.is_file(){
-            from_file(file_name, file_hash, file_size, total_pieces, no_of_pieces, piece_size, stream, pieces);
+            let file_path = file_path.to_str().unwrap();
+            from_file(file_name, file_path , file_hash, file_size, total_pieces, no_of_pieces, piece_size, stream, pieces);
             println!("completed");
             return ();
         }
@@ -62,8 +63,8 @@ pub fn handle_piece_request(
     println!("completed");
 }
 
-fn from_file(file_name:&str, file_hash:&str, file_size:usize, total_pieces:u64, no_of_pieces:usize, piece_size:u64, mut stream: TcpStream, pieces:Vec<FilePiece>){
-    let file = File::open(file_name).expect("failed to read file");
+fn from_file(file_name:&str, file_path:&str, file_hash:&str, file_size:usize, total_pieces:u64, no_of_pieces:usize, piece_size:u64, mut stream: TcpStream, pieces:Vec<FilePiece>){
+    let file = File::open(file_path).expect("failed to read file");
     let init_msg = format!("type:pieces\nfile_name:{file_name}\nfile_hash:{file_hash}\nfile_size:{file_size}\ntotal_pieces:{total_pieces}\npiece_length:{piece_size}\nno_of_pieces:{no_of_pieces}\n");
     println!("{}", init_msg);
     stream

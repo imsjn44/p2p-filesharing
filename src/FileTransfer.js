@@ -23,7 +23,7 @@ export default function FileTransfer() {
         setTransfer((prev) => {
           const temp = prev.filter(e => e.fileHash !== file_hash)
           const matched = prev.find(e => e.fileHash === file_hash)
-          const percent = (elem.count/matched.chunks) * 100
+          const percent = (elem.count/matched?.chunks) * 100
           matched.status = percent.toFixed(2);
           matched.down = elem.download_speed
           return [matched, ...temp]

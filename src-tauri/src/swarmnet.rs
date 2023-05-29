@@ -43,13 +43,13 @@ fn initialize_ip() -> String {
 //remember you have multple tcp udp request for third copy
 // pub const IP_ADDRS: &str = "192.168.1.66";
 // pub const *IP_ADDRS: &str = "127.0.0.1";
-const TCP_LISTENER_PORT: u16 = 7878;
-const UDP_LISTENER_PORT: u16 = 8787;
+pub const TCP_LISTENER_PORT: u16 = 7878;
+pub const UDP_LISTENER_PORT: u16 = 8787;
 
 // const TCP_RECEIVER_PORT: u16 = 7878;
 // const UDP_RECEIVER_PORT: u16 = 8787;
-const TCP_RECEIVER_PORT: u16 = 9898;
-const UDP_RECEIVER_PORT: u16 = 8989;
+pub const TCP_RECEIVER_PORT: u16 = 9898;
+pub const UDP_RECEIVER_PORT: u16 = 8989;
 
 #[derive(Clone, PartialEq)]
 pub enum Status {
@@ -341,10 +341,11 @@ impl SwarmNet {
     }
 
     pub fn completion_check_loop(
+        frontend_downloads:Arc<Mutex<HashMap<String, bool>>>,
         completion_tracker: Arc<Mutex<Vec<String>>>,
         downloading_files_map: Arc<Mutex<HashMap<String, FileInfo>>>,
         peer_and_pieces: Arc<Mutex<HashMap<String, Vec<PiecesFromPeer>>>>,
-        seeded_files: Arc<Mutex<HashMap<String, String>>>,
+        seeded_files: Arc<Mutex<HashMap<String, String>>>
     ) {
         thread::spawn(move || loop {
             let mut completion_tracker = completion_tracker.lock().unwrap();
@@ -357,11 +358,23 @@ impl SwarmNet {
                 peer_and_pieces.remove(file_hash);
                 drop(peer_and_pieces);
 
+                //to know if download checker is completed too
+                loop {
+                    let frontend_downloads = frontend_downloads.lock().unwrap();
+                    if frontend_downloads.get(file_hash).unwrap().clone(){
+                        break;
+                    }
+                    thread::sleep(Duration::from_secs(1));
+                    println!("frontend download checker not completed");
+
+                }
                 //remove pieces file
                 let folder_path = format!("pieces/{file_hash}");
 
                 // Remove the folder
                 fs::remove_dir_all(folder_path).unwrap();
+                let mut frontend_downloads = frontend_downloads.lock().unwrap();
+                frontend_downloads.remove(file_hash);
                 println!("pieces combined successfully!")
             }
         });
@@ -427,7 +440,7 @@ impl SwarmNet {
 
         let mut seeded_files = self.seeded_files.lock().unwrap();
         seeded_files.insert(file_hash.to_string(), "downloading".to_string());
-        Self::maintain_files_path(file_hash, "downloading".to_string());
+        Self::maintain_files_path(file_hash, "downloading");
     }
 
     fn combine_pieces(
@@ -468,8 +481,10 @@ impl SwarmNet {
         //releasing the downloading_files_map
         downloading_files_map.remove(file_hash).unwrap();
         let mut seeded_files = seeded_files.lock().unwrap();
-        seeded_files.insert(file_hash.to_string(), download_path.to_str().unwrap().to_string());
-        Self::maintain_files_path(file_hash, download_path.to_str().unwrap().to_string());
+        let download_path = download_path.to_str().unwrap().to_string();
+        let download_path = download_path.replace("\\", "\\\\");
+        Self::maintain_files_path(file_hash, &download_path);
+        seeded_files.insert(file_hash.to_string(), download_path);
     }
 
     pub fn broadcast_search(&mut self, value: &str) {
@@ -508,7 +523,7 @@ impl SwarmNet {
         }
     }
 
-    pub fn maintain_files_path(file_hash: &str, file_path: String){
+    pub fn maintain_files_path(file_hash: &str, file_path: &str){
         let path = format!("files_path/{file_hash}.txt");
         let mut file = File::create(path).unwrap();
         file.write(file_path.as_bytes()).unwrap();

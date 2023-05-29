@@ -6,6 +6,7 @@ use std::io::{BufRead, BufReader, Lines, Write};
 use std::net::{IpAddr, SocketAddr, TcpStream};
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::Duration;
+use crate::swarmnet::TCP_RECEIVER_PORT;
 pub fn piece_availability(reader: &mut BufReader<&mut TcpStream>, addrs: IpAddr) {
     println!("im inside piece request handler");
     let mut lines = reader.lines().map(|l| l.unwrap());
@@ -20,7 +21,7 @@ pub fn piece_availability(reader: &mut BufReader<&mut TcpStream>, addrs: IpAddr)
     let no_of_pieces = reader.lines().count();
     //
     let contents = fs::read_to_string(path).expect("failed to read file");
-    let addrs = SocketAddr::new(addrs, 7878);
+    let addrs = SocketAddr::new(addrs, TCP_RECEIVER_PORT);
     let timeout = Duration::from_secs(5);
     let mut stream = TcpStream::connect_timeout(&addrs, timeout).unwrap();
     let init_msg =

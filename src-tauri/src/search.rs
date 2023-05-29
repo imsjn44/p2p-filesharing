@@ -4,6 +4,7 @@ use std::io::Write;
 use std::net::{SocketAddr, TcpStream};
 use std::time::Duration;
 use std::{fs, net::IpAddr};
+use crate::swarmnet::TCP_RECEIVER_PORT;
 
 pub fn process_search(target_string: &str, ip_addr: IpAddr) {
     let mut search_result: HashMap<String, String> = HashMap::new();
@@ -12,7 +13,7 @@ pub fn process_search(target_string: &str, ip_addr: IpAddr) {
     println!("total files matched: {}", length);
     if length > 0 {
         //send the metadata of available files to the requesting peer
-        let socket_addr = SocketAddr::new(ip_addr, 7878);
+        let socket_addr = SocketAddr::new(ip_addr, TCP_RECEIVER_PORT);
         //set timeout of 10secs
         let timeout = Duration::from_secs(10);
         // let mut stream = TcpStream::connect(socket_addr)

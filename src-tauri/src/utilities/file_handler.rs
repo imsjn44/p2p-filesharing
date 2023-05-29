@@ -87,6 +87,7 @@ impl FileDivider {
             let hex_str = hex::encode(result);
             let piece = FilePiece::new(i, hex_str);
             pieces.push(piece);
+            println!("Completed {}%", (100*1024*1024*(i+1)) as f64 /file_size as f64);
         }
         let file_hash = hex::encode(whole_file_hasher.finalize());
         FileDivider {
@@ -156,6 +157,7 @@ impl FileDivider {
         } else {
             return None
         };
+        println!("Uploading {}", filename);
         // let file = File::open(file_path).unwrap();
         let f = FileDivider::divide_and_hash(file, filename, piece_size);
         let binding = f.get_string();

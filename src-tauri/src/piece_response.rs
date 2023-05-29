@@ -120,7 +120,7 @@ pub fn handle_pieces(
         // println!("received piece:{}", piece_no);
         let ip_and_piece = PieceFromIpAndPiece::new(addrs, piece_no);
         pieces_got_arr_temp.push(ip_and_piece);
-        let msg = format!("piece_no:{piece_no}epiece_hash:{hash}\n");
+        let msg = format!("piece_no:{piece_no}ehash:{hash}\n");
         piece_info_file
             .write_all(msg.as_bytes())
             .expect("failed to write piece_info");
@@ -146,7 +146,7 @@ pub fn handle_pieces(
 }
 
 fn parse_piece_no(text: &str) -> Option<(usize, String)> {
-    let re = Regex::new(r"piece_no:(\d+)epiece_hash:(\w+)").unwrap();
+    let re = Regex::new(r"piece_no:(\d+)ehash:(\w+)").unwrap();
 
     if let Some(captures) = re.captures(text) {
         let number_str = captures.get(1).unwrap().as_str();

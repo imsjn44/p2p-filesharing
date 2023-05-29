@@ -7,7 +7,7 @@ use std::net::{IpAddr, SocketAddr, TcpStream};
 use std::os::windows::fs::FileExt;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
-
+use crate::swarmnet::TCP_RECEIVER_PORT;
 use crate::utilities::file_handler::FilePiece;
 pub fn handle_piece_request(
     reader: &mut BufReader<&mut TcpStream>,
@@ -30,7 +30,7 @@ pub fn handle_piece_request(
     let pieces_req = lines.collect::<Vec<_>>();
     let pieces = FilePiece::parser(pieces_req, no_of_pieces);
 
-    let socket = SocketAddr::new(addrs, 7878);
+    let socket = SocketAddr::new(addrs, TCP_RECEIVER_PORT);
     let stream = TcpStream::connect(socket).unwrap();
     
     //transferring from the original file
@@ -79,13 +79,13 @@ fn from_file(file_name:&str, file_path:&str, file_hash:&str, file_size:usize, to
 
         let offset = piece_size * piece.piece_no;
         let bytes_read = file.seek_read(&mut buf, offset as u64).unwrap();
-        println!("bytes read {}\n", bytes_read);
+        println!("bytes sent {}\n", bytes_read);
         hasher.update(&buf[0..bytes_read]);
         let result = hasher.finalize();
         let hex_str = hex::encode(result);
 
         if hex_str == piece.hash {
-            let piece_info = format!("piece_no:{}epiece_hash:{}\n", piece.piece_no, piece.hash);
+            let piece_info = format!("piece_no:{}ehash:{}\n", piece.piece_no, piece.hash);
             stream.write(piece_info.as_bytes()).unwrap();
             // tfile.write(piece_info.as_bytes()).unwrap();
             stream.write(&buf).expect("failed to send piece");
@@ -116,7 +116,7 @@ fn from_pieces_folder(file_name:&str, file_hash:&str, file_size:usize, total_pie
         let hex_str = hex::encode(result);
 
         if hex_str == piece.hash {
-            let piece_info = format!("piece_no:{}epiece_hash:{}\n", piece.piece_no, piece.hash);
+            let piece_info = format!("piece_no:{}ehash:{}\n", piece.piece_no, piece.hash);
             stream.write(piece_info.as_bytes()).unwrap();
             // tfile.write(piece_info.as_bytes()).unwrap();
             stream.write(&buf).expect("failed to send piece");

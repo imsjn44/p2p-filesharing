@@ -3,7 +3,6 @@ import React from 'react'
 import './App.css';
 import { Progress, Box, ActionIcon, white } from '@mantine/core';
 import { IconPlayerPause, IconCheckbox, IconFolder, IconTrash, IconPlayerPlay } from '@tabler/icons-react';
-import { invoke } from '@tauri-apps/api/tauri';
 import { useState, useEffect } from 'react';
 import { emit } from '@tauri-apps/api/event';
 
@@ -14,11 +13,12 @@ const FileTransferComponent = ({ row, setTransfer }) => {
     const [progressText, setProgressText] = useState('Initializing download');
 
     useEffect(() => {
-        if (row?.status > 0 && row?.status < 99) {
+        console.log("status ", row?.status);
+        if (row?.status > 0 && row?.status < 100) {
             setProgressText('Downloading');
             SetProgressColor('blue');
 
-        } else if (row?.status > 99) {
+        } else if (parseInt(row?.status) === 100) {
             setProgressText('Seeding');
             SetProgressColor('green');
         }
@@ -28,11 +28,12 @@ const FileTransferComponent = ({ row, setTransfer }) => {
    
 
     const handleDeleteofDowloadedFile = async (fileName, fileHash) => {
+        console.log("file_hash", fileHash);
+        await emit('delete_file', { file_name: fileName, file_hash: fileHash });
         setTransfer((prev) => {
             return prev.filter((row) => row.fileHash !== fileHash);
 
         });
-        await invoke('delete_file', { fileName: fileName, fileHash: fileHash });
     };
 
     const handlePausePlay = () => {
@@ -54,9 +55,10 @@ const FileTransferComponent = ({ row, setTransfer }) => {
     }
     const progressTextStyle = {
         position: "absolute",
-        marginLeft: 20,
+        border:"2px solid red",
+        marginLeft:60,
         color: "white",
-        marginTop: -14,
+        marginTop: -16,
         textTransform: 'uppercase',
         fontFamily: "Monospace",
         fontSize: 11
@@ -78,6 +80,7 @@ const FileTransferComponent = ({ row, setTransfer }) => {
             <td>{formatBytes(row?.fileSize)}</td>
             <td>
 
+                            <div style={{position:"relative"}}>
                 <Progress
                     value={row?.status}
                     color={progressColor}
@@ -87,6 +90,7 @@ const FileTransferComponent = ({ row, setTransfer }) => {
                 />
                 <div style={progressTextStyle}>
                     {`${progressText} ${row?.status < 100 ? row?.status : ""} ${row?.status < 100 ? "%" : ""}`}
+                </div>
                 </div>
             </td>
             <td>

@@ -4,6 +4,7 @@
 )]
 
 use serde::Serialize;
+use std::collections::HashMap;
 use std::io::{BufRead, BufReader};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -20,10 +21,10 @@ pub mod retransmission;
 pub mod search;
 pub mod swarmnet;
 pub mod utilities;
+use local_ip_address::local_ip;
 use regex::Regex;
 use serde_json;
 use serde_json::Value;
-use local_ip_address::local_ip;
 
 fn initialize_seeded_files(peer: &mut SwarmNet) {
     let dir_path = "./files_path";
@@ -51,7 +52,12 @@ struct Payload {
     download_speed: String,
     count: usize,
 }
-fn download_status_tracker(window: Arc<Mutex<Window>>, file_hash: String, chunks: usize) {
+fn download_status_tracker(
+    window: Arc<Mutex<Window>>,
+    frontend_downloads: Arc<Mutex<HashMap<String, bool>>>,
+    file_hash: String,
+    chunks: usize,
+) {
     println!("inside speed tracker");
     let dir_path = format!("pieces/{file_hash}");
     let mut initial_count = 0 as usize;
@@ -64,11 +70,16 @@ fn download_status_tracker(window: Arc<Mutex<Window>>, file_hash: String, chunks
             Ok(files) => files,
             Err(_) => {
                 println!("folder doesn't exist");
-                count += 100;
-                continue;}
+                count += 1;
+                continue;
+            }
         };
         count = files.count();
         let count_diff = count - initial_count;
+        if count_diff == 0 {
+            break;
+        }
+        println!("count diff:{count_diff} count:{count} initial_count:{initial_count} ");
         initial_count = count;
         let end_time = time::Instant::now();
         let time_diff = end_time.duration_since(start_time).as_secs_f64();
@@ -78,15 +89,15 @@ fn download_status_tracker(window: Arc<Mutex<Window>>, file_hash: String, chunks
         // let percent= (count as f64/ chunks as f64) * 100 as f64;
         // let percent = download_speed
 
-        println!("download speed {}", download_speed);        
+        println!("download speed {}", download_speed);
         let window = window.lock().unwrap();
         window
             .emit_all(
                 &event_name,
                 Payload {
-                    file_hash:file_hash.clone(),
+                    file_hash: file_hash.clone(),
                     download_speed,
-                    count
+                    count,
                 },
             )
             .unwrap();
@@ -94,12 +105,17 @@ fn download_status_tracker(window: Arc<Mutex<Window>>, file_hash: String, chunks
         // let files = fs::read_dir(dir_path).unwrap();
         // let no_of_files = files.count();
     }
+    let mut frontend_downloads = frontend_downloads.lock().unwrap();
+    frontend_downloads.insert(file_hash, true);
+    println!("{:?}", frontend_downloads);
 }
 fn main() {
-
     let mut peer = SwarmNet::start();
     // peer.ip_addrs = ip_addrs;
     initialize_seeded_files(&mut peer);
+    let mut frontend_downloads: Arc<Mutex<HashMap<String, bool>>> =
+        Arc::new(Mutex::new(HashMap::new()));
+    let frontend_downloads2 = frontend_downloads.clone();
     peer.start_tcp_thread();
     peer.start_udp_thread_for_search();
     let completion_tracker = peer.completion_tracker.clone();
@@ -107,6 +123,7 @@ fn main() {
     let peer_and_pieces = peer.peer_and_pieces.clone();
     let seeded_files = peer.seeded_files.clone();
     SwarmNet::completion_check_loop(
+        frontend_downloads,
         completion_tracker,
         downloading_files_map,
         peer_and_pieces,
@@ -116,21 +133,36 @@ fn main() {
     let peer = Arc::new(Mutex::new(peer));
     let peer_cloned = Arc::clone(&peer);
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![
-            send_active_files,
-            delete_file
-        ])
+        .invoke_handler(tauri::generate_handler![send_active_files])
         .setup(move |app| {
             let peer = peer_cloned.clone();
             let peer1 = peer_cloned.clone();
             let peer2 = peer_cloned.clone();
             let peer3 = peer_cloned.clone();
+            let peer4 = peer_cloned.clone();
             // listen to the `event-name` (emitted on any window)
             let window = app.get_window("main").unwrap();
             let window_copy = Arc::new(Mutex::new(window));
             let window_download = window_copy.clone();
+            let frontend_downloads = frontend_downloads2.clone();
 
-            let _open_downloads_path = app.listen_global("open_downloads", move|event|{
+            let _delete = app.listen_global("delete_file", move |event| {
+                let payload = event.payload().unwrap();
+                let payload: Value = serde_json::from_str(payload).unwrap();
+                let mut file_hash = payload["file_hash"].to_string();
+                file_hash.pop();
+                file_hash.remove(0);
+                let mut file_name = payload["file_name"].to_string();
+                file_name.pop();
+                file_name.remove(0);
+                let peer = peer4.lock().unwrap();
+                let mut seeded_files = peer.seeded_files.lock().unwrap();
+                seeded_files.remove(&file_hash);
+                delete_file(file_name, file_hash.clone());
+                
+            });
+
+            let _open_downloads_path = app.listen_global("open_downloads", move |event| {
                 let payload = event.payload().unwrap();
                 let payload: Value = serde_json::from_str(payload).unwrap();
                 let mut file_hash = payload["file_hash"].to_string();
@@ -150,10 +182,15 @@ fn main() {
                 file_hash.pop();
                 file_hash.remove(0);
                 let chunks = payload["chunks"].to_string().parse::<usize>().unwrap();
-
-                println!("file_hash {} ", file_hash);
-                println!("chunks {} ", chunks);
-                download_status_tracker(window_download.clone(), file_hash, chunks);
+                let mut f_downloads = frontend_downloads.lock().unwrap();
+                f_downloads.insert(file_hash.clone(), false);
+                drop(f_downloads);
+                download_status_tracker(
+                    window_download.clone(),
+                    frontend_downloads.clone(),
+                    file_hash,
+                    chunks,
+                );
             });
 
             let _search_id = app.listen_global("search_query", move |event| {
@@ -181,7 +218,7 @@ fn main() {
                     let peer = peer2.lock().unwrap();
                     let mut seeded_files = peer.seeded_files.lock().unwrap();
                     seeded_files.insert(file_hash.clone(), file_path.clone());
-                    SwarmNet::maintain_files_path(&file_hash, file_path);
+                    SwarmNet::maintain_files_path(&file_hash, &file_path);
                 }
             });
 
@@ -260,7 +297,7 @@ fn open_downloaded_file(file_path: String) {
         .spawn()
         .unwrap();
 }
-#[tauri::command]
+
 fn delete_file(file_name: String, file_hash: String) {
     let file_hash_path = format!("file_hash/{file_name}.txt");
     let files_path = format!("files_path/{file_hash}.txt");
@@ -268,7 +305,9 @@ fn delete_file(file_name: String, file_hash: String) {
     let paths = [file_hash_path, files_path, piece_info_path];
     for path in paths {
         match fs::remove_file(path) {
-            Ok(()) => println!("File deleted successfully."),
+            Ok(()) => 
+                println!("File deleted successfully."),
+            
             Err(e) => println!("Error deleting file: {}", e),
         }
     }

@@ -76,9 +76,9 @@ fn download_status_tracker(
         };
         count = files.count();
         let count_diff = count - initial_count;
-        if count_diff == 0 {
-            break;
-        }
+        // if count_diff == 0 {
+        //     break;
+        // }
         println!("count diff:{count_diff} count:{count} initial_count:{initial_count} ");
         initial_count = count;
         let end_time = time::Instant::now();

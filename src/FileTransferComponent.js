@@ -55,7 +55,6 @@ const FileTransferComponent = ({ row, setTransfer }) => {
     }
     const progressTextStyle = {
         position: "absolute",
-        border:"2px solid red",
         marginLeft:60,
         color: "white",
         marginTop: -16,

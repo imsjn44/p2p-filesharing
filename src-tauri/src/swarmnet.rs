@@ -46,10 +46,10 @@ fn initialize_ip() -> String {
 pub const TCP_LISTENER_PORT: u16 = 7878;
 pub const UDP_LISTENER_PORT: u16 = 8787;
 
-// const TCP_RECEIVER_PORT: u16 = 7878;
-// const UDP_RECEIVER_PORT: u16 = 8787;
-pub const TCP_RECEIVER_PORT: u16 = 9898;
-pub const UDP_RECEIVER_PORT: u16 = 8989;
+pub const TCP_RECEIVER_PORT: u16 = 7878;
+pub const UDP_RECEIVER_PORT: u16 = 8787;
+// pub const TCP_RECEIVER_PORT: u16 = 9898;
+// pub const UDP_RECEIVER_PORT: u16 = 8989;
 
 #[derive(Clone, PartialEq)]
 pub enum Status {
